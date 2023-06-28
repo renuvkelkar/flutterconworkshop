@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "626275468590",
+    "project_id": "fluttercon-workshop",
+    "storage_bucket": "fluttercon-workshop.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:626275468590:android:ffc2ef705ac19b46d2a6bf",
+        "android_client_info": {
+          "package_name": "com.example.flutterconworkshop"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "626275468590-oiqi3r3s92o4pueerp3cdpha7e6mnn56.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBks6ZbZoDWhzNhvw6lWX4CbStyT97nBBA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "626275468590-oiqi3r3s92o4pueerp3cdpha7e6mnn56.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
