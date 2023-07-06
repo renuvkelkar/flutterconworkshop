@@ -49,9 +49,13 @@ class _HomeState extends State<Home> {
                   borderRadius: BorderRadius.all(Radius.circular(10))),
               child: TextButton(
                   onPressed: () async {
-                    signInAnonymously();
-                    await Navigator.push(context,
-                        MaterialPageRoute(builder: (_) => DashBoard(userId!)));
+                    signInAnonymously().whenComplete(() async {
+                      await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => DashBoard(userId!)));
+                    });
+
                     // ScaffoldMessenger.of(context).showSnackBar(
                     //   SnackBar(
                     //     content: Text('user is added'),

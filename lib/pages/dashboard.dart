@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutterconworkshop/model/cart_model.dart';
 import 'package:flutterconworkshop/model/category.dart';
 import 'package:flutterconworkshop/model/product.dart';
 import 'package:flutterconworkshop/pages/cartpage.dart';
+import 'package:http/http.dart' as http;
 
 class DashBoard extends StatefulWidget {
   DashBoard(this.userId, {super.key});
@@ -14,6 +16,7 @@ class DashBoard extends StatefulWidget {
 }
 
 class _DashBoardState extends State<DashBoard> {
+  //final response = await http.get("https://us-central1-fluttercon-workshop.cloudfunctions.net/ext-firestore-bundle-builder-serve/icecreams" as Uri);
   final ref = FirebaseFirestore.instance
       .collection('products')
       .withConverter<ProductModel>(
@@ -23,6 +26,46 @@ class _DashBoardState extends State<DashBoard> {
         toFirestore: (model, _) => model.toJson(),
       );
 
+  getBundle() async {
+    final res = await http.get(Uri.parse(
+        "https://us-central1-fluttercon-workshop.cloudfunctions.net/ext-firestore-bundle-builder-serve/icecreams"));
+    FirebaseFirestore.instance.loadBundle(res.bodyBytes).stream.listen((event) {
+      if (event.bytesLoaded == event.totalBytes) {
+        print("Completed ");
+        getProducts();
+      }
+    });
+  }
+
+  Future<QuerySnapshot> getDataFromServerFirestore() {
+    return FirebaseFirestore.instance.collection("products").get();
+  }
+
+  Future<QuerySnapshot> getDataFromCacheFirestore() {
+    return FirebaseFirestore.instance
+        .collection("products")
+        .get(const GetOptions(source: Source.cache));
+  }
+
+  DateTime dateTime = DateTime(2023, 07, 03, 19, 56);
+
+  List productList = [];
+  getProducts() async {
+    QuerySnapshot data;
+    if (DateTime.now().minute - dateTime.minute > 5) {
+      print("Getting from Server");
+      data = await getDataFromServerFirestore();
+    } else {
+      data = await getDataFromCacheFirestore();
+      print("Getting from Cache");
+    }
+
+    setState(() {});
+    productList = data.docs.map((e) => e.data()).toList();
+
+    print(productList.length);
+  }
+
   final catRef =
       FirebaseFirestore.instance.collection('category').withConverter<CatModel>(
             fromFirestore: (snapshot, _) => CatModel.fromJson(
@@ -31,30 +74,62 @@ class _DashBoardState extends State<DashBoard> {
             toFirestore: (model, _) => model.toJson(),
           );
 
-  final cartRef =
-      FirebaseFirestore.instance.collection('cart').withConverter<CartModel>(
-            fromFirestore: (snapshot, _) => CartModel.fromJson(
-              snapshot.data()!,
-            ),
-            toFirestore: (model, _) => model.toJson(),
-          );
-
+  final cartRef = FirebaseFirestore.instance
+      .collection('cart')
+      .doc(FirebaseAuth.instance.currentUser!.uid)
+      .withConverter<ShopCart>(
+        fromFirestore: (snapshot, _) => ShopCart.fromJson(
+          snapshot.data()!,
+        ),
+        toFirestore: (model, _) => model.toJson(),
+      );
+  List<CartModel> shoppinCart = [];
   String? currentCatName;
   String? productName;
   int? price;
   String? imageUrl;
 
   addToCart() {
+    ShopCart shopCart = ShopCart(shopCart: shoppinCart);
     CartModel cartData = CartModel(
         name: productName,
         cartUId: widget.userId,
         price: price,
         imageUrl: imageUrl);
-
-    setState(() {
-      cartRef.add(cartData);
-    });
+    shoppinCart.add(cartData);
+    // ShopCart shopCart = ShopCart(shopCart: shoppinCart);
+    cartRef.set(shopCart);
   }
+
+  @override
+  void initState() {
+    fetchCartData();
+    getBundle();
+    super.initState();
+  }
+
+  void fetchCartData() async {
+    final snapshot = await cartRef.get();
+
+    if (snapshot.exists) {
+      final ShopCart shopCart = snapshot.data()!;
+      if (shopCart.shopCart != null) {
+        shoppinCart = shopCart.shopCart!;
+      }
+    }
+  }
+
+  // addToCart() {
+  //   CartModel cartData = CartModel(
+  //       name: productName,
+  //       cartUId: widget.userId,
+  //       price: price,
+  //       imageUrl: imageUrl);
+  //   shoppinCart.add(cartData);
+  //   setState(() {
+  //     cartRef.add();
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
